@@ -1,1 +1,1 @@
-\a.\b.a b c (\d.e \f.g) h
+\f . (\x . f (x x)) (\x . f (x x))
