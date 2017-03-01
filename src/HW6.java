@@ -18,11 +18,11 @@ import java.util.stream.Collectors;
 
 public class HW6 {
 
-    private static class Equals {
+    private static class Equality {
         final TermExpression left;
         final TermExpression right;
 
-        private Equals(TermExpression left, TermExpression right) {
+        private Equality(TermExpression left, TermExpression right) {
             this.left = left;
             this.right = right;
         }
@@ -32,7 +32,7 @@ public class HW6 {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            Equals equals = (Equals) o;
+            Equality equals = (Equality) o;
 
             if (left != null ? !left.equals(equals.left) : equals.left != null) {
                 return false;
@@ -70,7 +70,7 @@ public class HW6 {
 
 
     private static int makeEquations(LambdaExpression expression,
-                                     List<Equals> system,
+                                     List<Equality> system,
                                      AtomicInteger nextNumber,
                                      Map<LambdaVariable, Integer> counter,
                                      Map<LambdaVariable, Integer> context) {
@@ -94,7 +94,7 @@ public class HW6 {
             counter.put(variable, newNumber);
             int stNumber = makeEquations(statement, system, nextNumber, counter, context);
             int resNumber = nextNumber.getAndIncrement();
-            system.add(new Equals(getVariable(resNumber), getArrow(newNumber, stNumber)));
+            system.add(new Equality(getVariable(resNumber), getArrow(newNumber, stNumber)));
             counter.remove(variable);
             if (oldNumber != -1) {
                 counter.put(variable, oldNumber);
@@ -107,22 +107,22 @@ public class HW6 {
             int leftNumber = makeEquations(left, system, nextNumber, counter, context);
             int rightNumber = makeEquations(right, system, nextNumber, counter, context);
             int resNumber = nextNumber.getAndIncrement();
-            system.add(new Equals(getVariable(leftNumber), getArrow(rightNumber, resNumber)));
+            system.add(new Equality(getVariable(leftNumber), getArrow(rightNumber, resNumber)));
             return resNumber;
         }
         throw new IllegalArgumentException("Unknown type");
     }
 
-    private static List<Equals> getWithout(List<Equals> initial, Equals withoutWhat) {
+    private static List<Equality> getWithout(List<Equality> initial, Equality withoutWhat) {
         return initial.stream().filter(eq -> !eq.equals(withoutWhat)).collect(Collectors.toList());
     }
 
-    private static List<Equals> substitute(List<Equals> system, TermVariable termVariable, TermExpression replacement) {
-        List<Equals> result = new ArrayList<>();
-        for (Equals eq : system) {
+    private static List<Equality> substitute(List<Equality> system, TermVariable termVariable, TermExpression replacement) {
+        List<Equality> result = new ArrayList<>();
+        for (Equality eq : system) {
             TermExpression sLeft = Utils.substitute(eq.left, termVariable, replacement);
             TermExpression sRight = Utils.substitute(eq.right, termVariable, replacement);
-            result.add(new Equals(sLeft, sRight));
+            result.add(new Equality(sLeft, sRight));
         }
         return result;
     }
@@ -133,12 +133,12 @@ public class HW6 {
         }
     }
 
-    private static List<Equals> solveSystem(List<Equals> system) throws SystemException {
+    private static List<Equality> solveSystem(List<Equality> system) throws SystemException {
         repeat:
         while (true) {
             if (system.isEmpty()) break;
 
-            for (Equals eq : system) {
+            for (Equality eq : system) {
                 //1 rule
                 if (eq.left.equals(eq.right)) {
                     system = getWithout(system, eq);
@@ -158,12 +158,12 @@ public class HW6 {
                     }
 
                     //2 rule - decompose
-                    List<Equals> nextSystem = getWithout(system, eq);
+                    List<Equality> nextSystem = getWithout(system, eq);
                     List<TermExpression> lefts = leftF.getArgs();
                     List<TermExpression> rights = rightF.getArgs();
 
                     for (int i = 0; i < lefts.size(); i++) {
-                        nextSystem.add(new Equals(lefts.get(i), rights.get(i)));
+                        nextSystem.add(new Equality(lefts.get(i), rights.get(i)));
                     }
 
                     system = nextSystem;
@@ -172,8 +172,8 @@ public class HW6 {
 
                 //4 rule (swap)
                 if (leftPart instanceof Function && rightPart instanceof TermVariable) {
-                    List<Equals> nextSystem = getWithout(system, eq);
-                    nextSystem.add(new Equals(rightPart, leftPart));
+                    List<Equality> nextSystem = getWithout(system, eq);
+                    nextSystem.add(new Equality(rightPart, leftPart));
                     system = nextSystem;
                     continue repeat;
                 }
@@ -185,10 +185,10 @@ public class HW6 {
                     }
 
                     //5 rule (eliminate)
-                    List<Equals> nextSystem = getWithout(system, eq);
+                    List<Equality> nextSystem = getWithout(system, eq);
 
                     boolean isInG = false;
-                    for (Equals neq : nextSystem) {
+                    for (Equality neq : nextSystem) {
                         if (Utils.getFreeVariables(neq.left).contains(leftPart)) {
                             isInG = true;
                             break;
@@ -201,7 +201,7 @@ public class HW6 {
 
                     if (isInG) {
                         nextSystem = substitute(nextSystem, (TermVariable) leftPart, rightPart);
-                        nextSystem.add(new Equals(leftPart, rightPart));
+                        nextSystem.add(new Equality(leftPart, rightPart));
                         system = nextSystem;
                         continue repeat;
                     }
@@ -243,15 +243,15 @@ public class HW6 {
             LambdaParser parser = LambdaParser.getInstance();
             LambdaExpression expression = parser.parse(input);
 
-            List<Equals> system = new ArrayList<>();
+            List<Equality> system = new ArrayList<>();
             Map<LambdaVariable, Integer> context = new HashMap<>();
             int equationAnswer = makeEquations(expression, system, new AtomicInteger(1), new HashMap<>(), context);
 
             try {
-                List<Equals> solution = solveSystem(system);
+                List<Equality> solution = solveSystem(system);
 
                 Map<TermExpression, TermExpression> leftToRight = new HashMap<>();
-                for (Equals eq : solution) {
+                for (Equality eq : solution) {
                     leftToRight.put(eq.left, eq.right);
                 }
 

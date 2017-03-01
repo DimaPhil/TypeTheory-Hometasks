@@ -62,7 +62,6 @@ public class HW4 {
     }
 
     private static Map<LambdaExpression, LambdaExpression> memory = new HashMap<>();
-
     private static Map<LambdaExpression, LambdaExpression> headMemory = new HashMap<>();
 
     private static void remember(LambdaExpression from, LambdaExpression to) {

@@ -12,12 +12,12 @@ import java.util.stream.Collectors;
 
 public class HW5 {
 
-    private static class Equals {
+    private static class Equality {
 
         final TermExpression left;
         final TermExpression right;
 
-        private Equals(TermExpression left, TermExpression right) {
+        private Equality(TermExpression left, TermExpression right) {
             this.left = left;
             this.right = right;
         }
@@ -27,7 +27,7 @@ public class HW5 {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            Equals equals = (Equals) o;
+            Equality equals = (Equality) o;
 
             if (left != null ? !left.equals(equals.left) : equals.left != null) return false;
             return !(right != null ? !right.equals(equals.right) : equals.right != null);
@@ -42,16 +42,16 @@ public class HW5 {
         }
     }
 
-    private static List<Equals> getWithout(List<Equals> initial, Equals withoutWhat) {
+    private static List<Equality> getWithout(List<Equality> initial, Equality withoutWhat) {
         return initial.stream().filter(eq -> !eq.equals(withoutWhat)).collect(Collectors.toList());
     }
 
-    private static List<Equals> substitute(List<Equals> system, TermVariable termVariable, TermExpression replacement) {
-        List<Equals> result = new ArrayList<>();
-        for (Equals eq : system) {
+    private static List<Equality> substitute(List<Equality> system, TermVariable termVariable, TermExpression replacement) {
+        List<Equality> result = new ArrayList<>();
+        for (Equality eq : system) {
             TermExpression sLeft = Utils.substitute(eq.left, termVariable, replacement);
             TermExpression sRight = Utils.substitute(eq.right, termVariable, replacement);
-            result.add(new Equals(sLeft, sRight));
+            result.add(new Equality(sLeft, sRight));
         }
         return result;
     }
@@ -63,7 +63,7 @@ public class HW5 {
 
             TermParser parser = TermParser.getInstance();
 
-            List<Equals> system = new ArrayList<>();
+            List<Equality> system = new ArrayList<>();
 
             while (in.hasNextLine()) {
                 String line = in.nextLine();
@@ -72,14 +72,14 @@ public class HW5 {
                 String subTerm2 = line.substring(index + 1);
                 TermExpression term1 = parser.parse(subTerm1);
                 TermExpression term2 = parser.parse(subTerm2);
-                system.add(new Equals(term1, term2));
+                system.add(new Equality(term1, term2));
             }
 
             repeat:
             while (true) {
                 if (system.isEmpty()) break;
 
-                for (Equals eq : system) {
+                for (Equality eq : system) {
                     //1 rule
                     if (eq.left.equals(eq.right)) {
                         system = getWithout(system, eq);
@@ -100,12 +100,12 @@ public class HW5 {
                         }
 
                         //2 rule - decompose
-                        List<Equals> nextSystem = getWithout(system, eq);
+                        List<Equality> nextSystem = getWithout(system, eq);
                         List<TermExpression> lefts = leftF.getArgs();
                         List<TermExpression> rights = rightF.getArgs();
 
                         for (int i = 0; i < lefts.size(); i++) {
-                            nextSystem.add(new Equals(lefts.get(i), rights.get(i)));
+                            nextSystem.add(new Equality(lefts.get(i), rights.get(i)));
                         }
 
                         system = nextSystem;
@@ -114,8 +114,8 @@ public class HW5 {
 
                     //4 rule (swap)
                     if (left instanceof Function && right instanceof TermVariable) {
-                        List<Equals> nextSystem = getWithout(system, eq);
-                        nextSystem.add(new Equals(right, left));
+                        List<Equality> nextSystem = getWithout(system, eq);
+                        nextSystem.add(new Equality(right, left));
                         system = nextSystem;
                         continue repeat;
                     }
@@ -128,10 +128,10 @@ public class HW5 {
                         }
 
                         //5 rule (eliminate)
-                        List<Equals> nextSystem = getWithout(system, eq);
+                        List<Equality> nextSystem = getWithout(system, eq);
 
                         boolean isInG = false;
-                        for (Equals neq : nextSystem) {
+                        for (Equality neq : nextSystem) {
                             if (Utils.getFreeVariables(neq.left).contains(left)) {
                                 isInG = true;
                                 break;
@@ -144,7 +144,7 @@ public class HW5 {
 
                         if (isInG) {
                             nextSystem = substitute(nextSystem, (TermVariable) left, right);
-                            nextSystem.add(new Equals(left, right));
+                            nextSystem.add(new Equality(left, right));
                             system = nextSystem;
                             continue repeat;
                         }
@@ -154,7 +154,7 @@ public class HW5 {
                 break;
             }
 
-            for (Equals eq : system) {
+            for (Equality eq : system) {
                 out.println(eq.left + "=" + eq.right);
             }
 
